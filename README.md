@@ -61,13 +61,13 @@ m3u8格式视频流下载工具，支持多并发下载。
 **使用方法：**
 
 ```bash
-./out/draw -folder <图片目录路径>
+./out/lines -folder <图片目录路径>
 ```
 
 **示例：**
 
 ```bash
-./out/draw -folder ./images
+./out/lines -folder ./images
 ```
 
 ## 🚀 快速开始
