@@ -11,7 +11,7 @@ import (
 	"sync"
 	"sync/atomic"
 
-	"ystools/draw/tools"
+	"ystools/lines/tools"
 )
 
 type ImageTask struct {

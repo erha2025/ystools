@@ -48,12 +48,12 @@ m3u8格式视频流下载工具，支持多并发下载。
 ./out/sketch -dir /Users/yangsen/Pictures
 ```
 
-### 3. draw - 图片拼图工具
+### 3. lines - 图片九宫格画线工具
 
-将图片目录中的图片按网格方式拼合成一张大图。
+将图片目录中的图画上九宫格，便于绘画新手临摹。
 
 **功能特点：**
-- 多图片网格拼图
+- 图片九宫格展示
 - 并发处理（4个工作线程）
 - 实时处理进度显示
 - 自动识别JPG/PNG格式
@@ -107,7 +107,7 @@ ystools/
 │   └── main.go
 ├── sketch/               # 图片转线稿工具
 │   └── main.go
-└── draw/                 # 图片拼图工具
+└── lines/                 # 图片九宫格画线工具
     ├── main.go
     └── tools/
         └── get_file.go
@@ -119,7 +119,7 @@ ystools/
 
 - `out/m3u8down` - m3u8视频下载器
 - `out/sketch` - 图片转线稿工具
-- `out/draw` - 图片拼图工具
+- `out/lines` - 图片九宫格画线工具
 
 ## 📝 依赖说明
 

@@ -1,0 +1,28 @@
+# 编译输出目录
+out/
+
+# 可执行文件（如果直接在项目根目录）
+*.exe
+*.dll
+*.so
+*.dylib
+
+# 测试输出
+*.test
+*.out
+
+# Go workspace file
+go.work
+
+# IDE 配置
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# 临时文件
+*.log
+tmp/
+temp/
