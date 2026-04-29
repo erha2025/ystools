@@ -70,6 +70,50 @@ m3u8格式视频流下载工具，支持多并发下载。
 ./out/lines -folder ./images
 ```
 
+### 4. dgmove - 文件重命名移动工具
+
+递归遍历源文件夹中的所有文件，按照00001-99999格式递增重命名并移动到目标文件夹。
+
+**功能特点：**
+- 递归遍历文件夹
+- 自动按序重命名（00001格式）
+- 保留原文件扩展名
+- 支持错误处理，单个文件失败不影响其他文件
+
+**使用方法：**
+
+```bash
+./out/dgmove -src <源文件夹路径> -dst <目标文件夹路径>
+```
+
+**示例：**
+
+```bash
+./out/dgmove -src /Users/yangsen/Downloads/pixiv -dst /Users/yangsen/Downloads/todo
+```
+
+### 5. topdf - 图片转PDF工具
+
+将图片目录中的所有图片合并生成PDF文件。
+
+**功能特点：**
+- 支持多种图片格式（JPG/PNG等）
+- 自动按文件名排序
+- 生成高质量PDF
+- 支持自定义输出文件名
+
+**使用方法：**
+
+```bash
+./out/topdf -folder <图片目录路径>
+```
+
+**示例：**
+
+```bash
+./out/topdf -folder /Users/yangsen/Downloads/images
+```
+
 ## 🚀 快速开始
 
 ### 环境要求
@@ -107,10 +151,14 @@ ystools/
 │   └── main.go
 ├── sketch/               # 图片转线稿工具
 │   └── main.go
-└── lines/                 # 图片九宫格画线工具
-    ├── main.go
-    └── tools/
-        └── get_file.go
+├── lines/                # 图片九宫格画线工具
+│   ├── main.go
+│   └── tools/
+│       └── get_file.go
+├── dgmove/               # 文件重命名移动工具
+│   └── main.go
+└── topdf/                # 图片转PDF工具
+    └── main.go
 ```
 
 ## 🔧 编译说明
@@ -120,6 +168,8 @@ ystools/
 - `out/m3u8down` - m3u8视频下载器
 - `out/sketch` - 图片转线稿工具
 - `out/lines` - 图片九宫格画线工具
+- `out/dgmove` - 文件重命名移动工具
+- `out/topdf` - 图片转PDF工具
 
 ## 📝 依赖说明
 
