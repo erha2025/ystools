@@ -65,7 +65,7 @@ func toLineDraft(src image.Image) image.Image {
 }
 
 // 处理单张图片
-func processImage(inputPath string) Result {
+func processImage(inputPath string, outputDir string) Result {
 	result := Result{
 		inputPath: inputPath,
 	}
@@ -73,8 +73,8 @@ func processImage(inputPath string) Result {
 	// 生成输出文件名: 24.jpg -> 24_sk.png
 	ext := filepath.Ext(inputPath)
 	name := strings.TrimSuffix(filepath.Base(inputPath), ext)
-	// 输出为 PNG 格式
-	outputPath := filepath.Join(filepath.Dir(inputPath), name+"_sk.png")
+	// 输出为 PNG 格式，保存到指定的输出目录
+	outputPath := filepath.Join(outputDir, name+"_sk.png")
 	result.outputPath = outputPath
 
 	// 打开图片
@@ -133,13 +133,14 @@ func getImageFiles(dir string) ([]string, error) {
 }
 
 // 协程池处理图片
-func processWithPool(files []string) {
+func processWithPool(files []string, outputDir string) {
 	if len(files) == 0 {
 		fmt.Println("未找到支持的图片文件 (jpg, webp, png)")
 		return
 	}
 
 	fmt.Printf("找到 %d 个图片文件\n", len(files))
+	fmt.Printf("输出目录: %s\n", outputDir)
 	fmt.Printf("启动协程池，大小: %d\n\n", poolSize)
 
 	// 创建任务通道
@@ -159,7 +160,7 @@ func processWithPool(files []string) {
 
 			for path := range tasks {
 				fmt.Printf("Worker %d 处理: %s\n", workerID+1, filepath.Base(path))
-				result := processImage(path)
+				result := processImage(path, outputDir)
 				results <- result
 			}
 
@@ -231,6 +232,19 @@ func main() {
 
 	fmt.Printf("📁 图片目录: %s\n\n", *dir)
 
+	// 创建输出目录：在输入目录的同级目录下创建 原文件夹名_sk 的文件夹
+	dirName := filepath.Base(*dir)
+	parentDir := filepath.Dir(*dir)
+	outputDir := filepath.Join(parentDir, dirName+"_sk")
+
+	// 创建输出目录
+	err = os.MkdirAll(outputDir, 0755)
+	if err != nil {
+		fmt.Printf("❌ 创建输出目录失败: %v\n", err)
+		return
+	}
+	fmt.Printf("📂 输出目录: %s\n\n", outputDir)
+
 	// 获取目录下所有图片文件
 	files, err := getImageFiles(*dir)
 	if err != nil {
@@ -239,7 +253,7 @@ func main() {
 	}
 
 	// 使用协程池处理
-	processWithPool(files)
+	processWithPool(files, outputDir)
 }
 
 //  运行  ./sketch -dir /Users/yangsen/Downloads

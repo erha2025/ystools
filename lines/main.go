@@ -101,6 +101,7 @@ func (p *WorkerPool) GetProcessedCount() int64 {
 
 func main() {
 	folder := flag.String("folder", "", "图片目录路径")
+	del := flag.Bool("del", false, "处理完成后是否删除原文件")
 	flag.Parse()
 
 	if *folder == "" {
@@ -117,6 +118,7 @@ func main() {
 
 	pool := NewWorkerPool(3)
 
+	var processedFiles []string
 	taskCount := 0
 	for _, file := range files {
 		if file.IsDir() {
@@ -137,7 +139,9 @@ func main() {
 			outputExt = "_lines.png"
 		}
 		outputFilename := baseName + outputExt
-		outputPath := filepath.Join(".", outputFilename)
+		outputPath := filepath.Join(*folder, outputFilename)
+
+		processedFiles = append(processedFiles, inputPath)
 
 		task := ImageTask{
 			inputPath:      inputPath,
@@ -152,7 +156,20 @@ func main() {
 
 	pool.Close()
 
+	if *del && len(processedFiles) > 0 {
+		fmt.Println("\n删除原文件...")
+		for _, filePath := range processedFiles {
+			err := os.Remove(filePath)
+			if err != nil {
+				fmt.Printf("删除失败 %s: %v\n", filepath.Base(filePath), err)
+			} else {
+				fmt.Printf("已删除: %s\n", filepath.Base(filePath))
+			}
+		}
+	}
+
 	fmt.Printf("\n处理完成！共处理 %d 张图片\n", pool.GetProcessedCount())
 }
 
-// go run main.go -folder "图片目录路径"
+// go run main.go -folder "图片目录路径" [-del]
+// 示例: go run main.go -folder "/Users/yangsen/Pictures" -del
