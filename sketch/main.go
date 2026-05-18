@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"image"
 	"image/color"
+	_ "image/jpeg"
 	"image/png"
 	"math"
 	"os"
@@ -13,6 +14,7 @@ import (
 	"sync"
 
 	"github.com/disintegration/imaging"
+	_ "golang.org/x/image/webp"
 )
 
 // 协程池配置
@@ -121,11 +123,10 @@ func processImage(inputPath string, outputDir string) Result {
 		inputPath: inputPath,
 	}
 
-	// 生成输出文件名: 24.jpg -> 24_sk.png
-	ext := filepath.Ext(inputPath)
-	name := strings.TrimSuffix(filepath.Base(inputPath), ext)
-	// 输出为 PNG 格式，保存到指定的输出目录
-	outputPath := filepath.Join(outputDir, name+"_sk.png")
+	// 生成输出文件名，保留原扩展名防止同名文件覆盖
+	// 如 OIP-C.jpeg → OIP-C.jpeg_sk.png, OIP-C.webp → OIP-C.webp_sk.png
+	filename := filepath.Base(inputPath)
+	outputPath := filepath.Join(outputDir, filename+"_sk.png")
 	result.outputPath = outputPath
 
 	// 打开图片
