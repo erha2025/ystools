@@ -6,6 +6,7 @@ import (
 	"image"
 	"image/color"
 	"image/png"
+	"math"
 	"os"
 	"path/filepath"
 	"strings"
@@ -25,28 +26,56 @@ type Result struct {
 	err        error
 }
 
-// toLineDraft 图片转线稿核心函数
-func toLineDraft(src image.Image) image.Image {
-	// 1. 转为灰度图
-	gray := imaging.Grayscale(src)
+// sobelFindEdges Sobel 边缘检测，对应 PS 的"滤镜 > 风格化 > 查找边缘"
+func sobelFindEdges(img image.Image) *image.Gray {
+	nrgba := imaging.Grayscale(img)
+	bounds := nrgba.Bounds()
 
-	// 2. 高斯模糊（参数：模糊半径，数值越大线稿越粗）
-	blur := imaging.Blur(gray, 3.0)
-
-	// 3. 模糊图反色
-	invertBlur := imaging.Invert(blur)
-
-	// 4. 颜色减淡混合（核心：灰度图 + 反色模糊图 = 线稿）
-	bounds := gray.Bounds()
-	lineDraft := image.NewGray(bounds)
+	gray := image.NewGray(bounds)
 	for y := bounds.Min.Y; y < bounds.Max.Y; y++ {
 		for x := bounds.Min.X; x < bounds.Max.X; x++ {
-			// 原始灰度值
+			r, _, _, _ := nrgba.At(x, y).RGBA()
+			gray.SetGray(x, y, color.Gray{Y: uint8(r >> 8)})
+		}
+	}
+
+	result := image.NewGray(bounds)
+	for y := bounds.Min.Y + 1; y < bounds.Max.Y-1; y++ {
+		for x := bounds.Min.X + 1; x < bounds.Max.X-1; x++ {
+			gx := -int(gray.GrayAt(x-1, y-1).Y) + int(gray.GrayAt(x+1, y-1).Y) +
+				-2*int(gray.GrayAt(x-1, y).Y) + 2*int(gray.GrayAt(x+1, y).Y) +
+				-int(gray.GrayAt(x-1, y+1).Y) + int(gray.GrayAt(x+1, y+1).Y)
+
+			gy := -int(gray.GrayAt(x-1, y-1).Y) - 2*int(gray.GrayAt(x, y-1).Y) - int(gray.GrayAt(x+1, y-1).Y) +
+				int(gray.GrayAt(x-1, y+1).Y) + 2*int(gray.GrayAt(x, y+1).Y) + int(gray.GrayAt(x+1, y+1).Y)
+
+			mag := math.Sqrt(float64(gx*gx + gy*gy))
+			val := uint8(mag / 4.0)
+			if mag/4.0 > 255 {
+				val = 255
+			}
+			result.SetGray(x, y, color.Gray{Y: val})
+		}
+	}
+	return result
+}
+
+// toLineDraft 图片转线稿核心函数
+// 对应 PS 流程：去色 → 反相+颜色减淡 → 查找边缘 → 合并
+func toLineDraft(src image.Image) image.Image {
+	gray := imaging.Grayscale(src)
+
+	blur := imaging.Blur(gray, 3.0)
+
+	invertBlur := imaging.Invert(blur)
+
+	bounds := gray.Bounds()
+	grayDraft := image.NewGray(bounds)
+	for y := bounds.Min.Y; y < bounds.Max.Y; y++ {
+		for x := bounds.Min.X; x < bounds.Max.X; x++ {
 			g, _, _, _ := gray.At(x, y).RGBA()
-			// 反色模糊后的灰度值
 			ib, _, _, _ := invertBlur.At(x, y).RGBA()
 
-			// 颜色减淡公式
 			var val uint32
 			if ib == 0xFFFF {
 				val = 0xFFFF
@@ -57,11 +86,33 @@ func toLineDraft(src image.Image) image.Image {
 				}
 			}
 
-			lineDraft.SetGray(x, y, color.Gray{Y: uint8(val >> 8)})
+			grayDraft.SetGray(x, y, color.Gray{Y: uint8(val >> 8)})
 		}
 	}
 
-	return lineDraft
+	edges := sobelFindEdges(grayDraft)
+
+	edgesInvert := image.NewGray(bounds)
+	for y := bounds.Min.Y; y < bounds.Max.Y; y++ {
+		for x := bounds.Min.X; x < bounds.Max.X; x++ {
+			edgesInvert.SetGray(x, y, color.Gray{Y: 255 - edges.GrayAt(x, y).Y})
+		}
+	}
+
+	finalDraft := image.NewGray(bounds)
+	for y := bounds.Min.Y; y < bounds.Max.Y; y++ {
+		for x := bounds.Min.X; x < bounds.Max.X; x++ {
+			d := grayDraft.GrayAt(x, y).Y
+			e := edgesInvert.GrayAt(x, y).Y
+			if e < d {
+				finalDraft.SetGray(x, y, color.Gray{Y: e})
+			} else {
+				finalDraft.SetGray(x, y, color.Gray{Y: d})
+			}
+		}
+	}
+
+	return finalDraft
 }
 
 // 处理单张图片
